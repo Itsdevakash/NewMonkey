@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem'
+import  Spinner from './Spinner';
 
 export class News extends Component {
 
@@ -48,29 +49,86 @@ export class News extends Component {
         super();
         this.state={
             articles:this.articles,
-            loading:false
+            loading:false,
+            page:1
         }
     }
-  static propTypes = {
 
-  }
+    async componentDidMount(){
+
+      let url =`https://newsapi.org/v2/top-headlines?country=in&apiKey=573261e3c07c4ee5a442ccd15fe27842&page=1&pageSize=${this.props.pageSize}`;
+      this.setState({ loading:true});
+      let data = await fetch(url);
+      let parsedData = await data.json();
+    
+      this.setState({
+        articles:parsedData.articles,
+        totalResults:parsedData.totalResults,
+        loading:false
+      
+      })
+    }
+
+
+    Preclick = async ()=>{
+      let url =`https://newsapi.org/v2/top-headlines?country=in&apiKey=573261e3c07c4ee5a442ccd15fe27842&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`;
+      this.setState({ loading:true});
+      let data = await fetch(url);
+      let parsedData = await data.json()
+    
+      this.setState({
+        page:this.state.page-1,
+        articles:parsedData.articles,
+        loading:false
+      })
+
+    }
+
+    hendlNextClick= async ()=>{
+
+      if(!(this.state.page + 1 > Math.ceil(this.state.totalResults/this.props.pageSize))){
+
+      
+      let url =`https://newsapi.org/v2/top-headlines?country=in&apiKey=573261e3c07c4ee5a442ccd15fe27842&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`;
+      this.setState({ loading:true});
+      let data = await fetch(url);
+      let parsedData = await data.json()
+    
+      this.setState({
+        page: this.state.page+1,
+        articles:parsedData.articles,
+        loading:false
+      })
+    }
+
+
+    }
+ 
 
   render() {
     return (
      
         <div className='container my-3'>
-            <h2>NewsMonkey - Top Headlines</h2><br></br>
+            <h2 className='text-center'>NewsMonkey - Top Headlines</h2><br></br>
+          {this.state.loading && <Spinner/>}
+         
            
             <div className='row'>
-            {this.state.articles.map((element)=>{
+            {!this.state.loading && this.state.articles.map((element)=>{
             
               return <div className='col-md-4' key={element.url}  >
-            <NewsItem title={element.title.slice(0,45)}  description={element.description.slice(0,80)} imageurl={element.urlToImage}  newsurl={element.url}/>
+            <NewsItem title={element.title?element.title.slice(0,45):""}  description={element.description?element.description.slice(0,80):''} imageurl={element.urlToImage}  newsurl={element.url}/>
+                <br></br>
+                
                 </div>
                 })}
               
         </div>
-
+        <br></br>
+<div className='container d-flex justify-content-between'>
+<button type="button" disabled={this.state.page<=1} className="btn btn-primary" onClick={this.Preclick}>&#8592; Previous</button>
+<button type="button" disabled={this.state.page + 1 > Math.ceil(this.state.totalResults/this.props.pageSize)} className="btn btn-secondary" onClick={this.hendlNextClick}  >Next &#8594;</button>
+  </div>
        
       </div>
     )
